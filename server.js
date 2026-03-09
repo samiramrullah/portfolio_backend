@@ -1,97 +1,66 @@
-const http = require("http");
+const express = require("express");
+const cors = require("cors");
 const { Resend } = require("resend");
 require("dotenv").config();
 
+const app = express();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const allowedOrigin = "https://www.samiramrullah.com";
+// CORS configuration
+app.use(cors({
+  origin: "https://www.samiramrullah.com",
+  methods: ["POST"],
+  allowedHeaders: ["Content-Type"]
+}));
 
-const server = http.createServer((req, res) => {
+app.use(express.json());
 
-  const headers = {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Content-Type": "application/json"
-  };
+app.post("/contact", async (req, res) => {
+  try {
 
-  // Handle preflight request
-  if (req.method === "OPTIONS") {
-    res.writeHead(200, headers);
-    return res.end();
-  }
+    const { name, email, subject, message } = req.body;
 
-  // Contact endpoint
-  if (req.method === "POST" && req.url === "/contact") {
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required"
+      });
+    }
 
-    let body = "";
-
-    req.on("data", chunk => {
-      body += chunk;
+    await resend.emails.send({
+      from: "Portfolio <onboarding@resend.dev>",
+      to: "samiramrullah@gmail.com",
+      subject: `Portfolio Message: ${subject}`,
+      html: `
+        <h2>New Portfolio Contact</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <hr/>
+        <p><strong>Message:</strong></p>
+        <p>${message}</p>
+      `
     });
 
-    req.on("end", async () => {
-
-      try {
-        const { name, email, subject, message } = JSON.parse(body);
-
-        if (!name || !email || !subject || !message) {
-          res.writeHead(400, headers);
-          return res.end(JSON.stringify({
-            success: false,
-            message: "All fields are required"
-          }));
-        }
-
-        await resend.emails.send({
-          from: "Portfolio <onboarding@resend.dev>",
-          to: "samiramrullah@gmail.com",
-          subject: `Portfolio Message: ${subject}`,
-          html: `
-            <h2>New Portfolio Contact</h2>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Subject:</strong> ${subject}</p>
-            <hr/>
-            <p><strong>Message:</strong></p>
-            <p>${message}</p>
-          `
-        });
-
-        res.writeHead(200, headers);
-        res.end(JSON.stringify({
-          success: true,
-          message: "Email sent successfully"
-        }));
-
-      } catch (error) {
-
-        console.error(error);
-
-        res.writeHead(500, headers);
-        res.end(JSON.stringify({
-          success: false,
-          message: "Failed to send email"
-        }));
-
-      }
-
+    res.json({
+      success: true,
+      message: "Email sent successfully"
     });
 
-  } else {
+  } catch (error) {
 
-    res.writeHead(404, headers);
-    res.end(JSON.stringify({
+    console.error(error);
+
+    res.status(500).json({
       success: false,
-      message: "Route not found"
-    }));
+      message: "Failed to send email"
+    });
 
   }
-
 });
 
 const port = process.env.PORT || 5000;
 
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
