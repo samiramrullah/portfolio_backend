@@ -4,15 +4,20 @@ require("dotenv").config();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const allowedOrigin = "https://www.samiramrullah.com";
+
 const server = http.createServer((req, res) => {
 
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "https://www.samiramrullah.com");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  const headers = {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Content-Type": "application/json"
+  };
 
+  // Handle preflight request
   if (req.method === "OPTIONS") {
-    res.writeHead(200);
+    res.writeHead(200, headers);
     return res.end();
   }
 
@@ -22,17 +27,16 @@ const server = http.createServer((req, res) => {
     let body = "";
 
     req.on("data", chunk => {
-      body += chunk.toString();
+      body += chunk;
     });
 
     req.on("end", async () => {
-      try {
 
+      try {
         const { name, email, subject, message } = JSON.parse(body);
 
-        // Basic validation
         if (!name || !email || !subject || !message) {
-          res.writeHead(400, { "Content-Type": "application/json" });
+          res.writeHead(400, headers);
           return res.end(JSON.stringify({
             success: false,
             message: "All fields are required"
@@ -45,20 +49,16 @@ const server = http.createServer((req, res) => {
           subject: `Portfolio Message: ${subject}`,
           html: `
             <h2>New Portfolio Contact</h2>
-
             <p><strong>Name:</strong> ${name}</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Subject:</strong> ${subject}</p>
-
             <hr/>
-
             <p><strong>Message:</strong></p>
             <p>${message}</p>
           `
         });
 
-        // Success response
-        res.writeHead(200, { "Content-Type": "application/json" });
+        res.writeHead(200, headers);
         res.end(JSON.stringify({
           success: true,
           message: "Email sent successfully"
@@ -66,19 +66,21 @@ const server = http.createServer((req, res) => {
 
       } catch (error) {
 
-        console.error("Email error:", error);
+        console.error(error);
 
-        res.writeHead(500, { "Content-Type": "application/json" });
+        res.writeHead(500, headers);
         res.end(JSON.stringify({
           success: false,
           message: "Failed to send email"
         }));
+
       }
+
     });
 
   } else {
 
-    res.writeHead(404, { "Content-Type": "application/json" });
+    res.writeHead(404, headers);
     res.end(JSON.stringify({
       success: false,
       message: "Route not found"
