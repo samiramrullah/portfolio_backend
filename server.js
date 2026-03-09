@@ -1,16 +1,15 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const { Resend } = require("resend");
-require("dotenv").config();
 
 const app = express();
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// CORS configuration
 app.use(cors({
-  origin: "https://www.samiramrullah.com",
-  methods: ["POST"],
-  allowedHeaders: ["Content-Type"]
+  origin: "https://www.samiramrullah.com"
 }));
 
 app.use(express.json());
@@ -33,11 +32,11 @@ app.post("/contact", async (req, res) => {
       subject: `Portfolio Message: ${subject}`,
       html: `
         <h2>New Portfolio Contact</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Subject:</strong> ${subject}</p>
+        <p><b>Name:</b> ${name}</p>
+        <p><b>Email:</b> ${email}</p>
+        <p><b>Subject:</b> ${subject}</p>
         <hr/>
-        <p><strong>Message:</strong></p>
+        <p><b>Message:</b></p>
         <p>${message}</p>
       `
     });
@@ -62,5 +61,5 @@ app.post("/contact", async (req, res) => {
 const port = process.env.PORT || 5000;
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log("Server running on port " + port);
 });
