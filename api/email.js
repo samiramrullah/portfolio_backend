@@ -17,4 +17,11 @@ router.post('/', (req, res) => {
     })
 })
 
+router.get('/',(res,req)=>{
+    res.status(200).json({
+        status:true,
+        message:"Okay"
+    })
+})
+
 module.exports = router;
