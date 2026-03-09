@@ -3,7 +3,7 @@ const { Resend } = require('resend')
 const router = express.Router();
 
 router.post('/', (req, res) => {
-    const resend = new Resend('re_RcAYDAm5_NREjYaVHTBfyLm7q2PMT5QvL');
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     resend.emails.send({
         from: 'onboarding@resend.dev',
